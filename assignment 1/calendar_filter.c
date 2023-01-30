@@ -30,7 +30,7 @@ struct events{
     char time[5];
     char location[10];
     bool if_print;
-    int number;a
+    int number;
 }event[100];
 
 void struct_copy(struct events *dest, int ori_num){
