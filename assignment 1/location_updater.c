@@ -4,96 +4,88 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <fcntl.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define Read  0
-#define Write 1
+#define READ  0
+#define WRITE 1
+#define PROCESS_1 "./email_filter.bin"
+#define PROCESS_2 "./calendar_filter.bin"
+#define errExit(__VA_ARGS__){ \
+        fprintf(stderr, __VA_ARGS__); \
+        exit(1);              \
+        }
+
 
 int main(int argc, char *argv[])
 {
-    int pfd[2];           /* Pipe file descriptors */
-
-    /* Create pipe */
-    pipe(pfd);    // email_filter - fifo - calendar_filter
-
-    pid_t child_p[2];
-//    if (pipe(pfd) == -1)                            /* Create pipe */
-//        errExit("pipe");
+    int pfd[2];              // Pipe file descriptors
+    pipe(pfd);               // email_filter - fifo - calendar_filter
+    pid_t child_p[2];        // PID create for child process
+    if (pipe(pfd) == -1)
+        errExit("pipe create error\n");
 
     switch (child_p[0] = fork()) {
-//        case -1:
-//            errExit("fork");
+        case -1:
+            errExit("child 1 create error\n");
 
         case 0:             /* First child: exec 'ls' to write to pipe */
-            close(pfd[Read]);
-
-//            if (close(pfd[0]) == -1)                    /* Read end is unused */
-//                errExit("close 1");
+            if (close(pfd[READ]) == -1)                    /* READ end is unused */
+                errExit("child 1: close read end error\n");
 
             /* Duplicate stdout on write end of pipe; close duplicated descriptor */
 
-            if (pfd[Write] != STDOUT_FILENO) {              /* Defensive check */
-                dup2(pfd[Write], STDOUT_FILENO);
-//                if (dup2(pfd1[1], STDOUT_FILENO) == -1)
-//                    errExit("dup2 1");
-                close(pfd[Write]);
-//                if (close(pfd1[1]) == -1)
-//                    errExit("close 2");
+            if (pfd[WRITE] != STDOUT_FILENO) {              /* Defensive check */
+                dup2(pfd[WRITE], STDOUT_FILENO);
+                if (dup2(pfd[WRITE], STDOUT_FILENO) == -1)
+                    errExit("child 1: dup2 write error\n");
+                if (close(pfd[WRITE]) == -1)
+                    errExit("child 1: close write end error\n");
             }
 
-            execlp("EmailFilter", "EmailFilter", (char *) NULL);          /* Writes to pipe */
-//            errExit("execlp ls");
+            execl(PROCESS_1, (char *) NULL);          /* Writes to pipe */
+            errExit("execl email_filter\n");
 
         default:            /* Parent falls through to create next child */
             break;
     }
 
     switch (child_p[1] = fork()) {
-//        case -1:
-//            errExit("fork");
+        case -1:
+            errExit("child 2 create error\n");
 
         case 0:             /* Second child: exec 'wc' to read from pipe */
-            close(pfd[Write]);
-//            if (close(pfd2[1]) == -1)                    /* Write end is unused */
-//                errExit("close 3");
+            if (close(pfd[WRITE]) == -1)                    /* WRITE end is unused */
+                errExit("child 2: close write end error\n");
 
             /* Duplicate stdin on read end of pipe; close duplicated descriptor */
 
-            if (pfd[Read] != STDIN_FILENO) {               /* Defensive check */
-                dup2(pfd[Read], STDIN_FILENO);
-//                if (dup2(pfd2[0], STDIN_FILENO) == -1)
-//                    errExit("dup2 2");
-                close(pfd[Read]);
-//                if (close(pfd2[0]) == -1)
-//                    errExit("close 4");
+            if (pfd[READ] != STDIN_FILENO) {               /* Defensive check */
+                dup2(pfd[READ], STDIN_FILENO);
+                if (dup2(pfd[READ], STDIN_FILENO) == -1)
+                    errExit("child 2: dup2 read error\n");
+                if (close(pfd[READ]) == -1)
+                    errExit("child 2: close read end error\n");
             }
 
-            execlp("CalendarFilter", "CalendarFilter", (char *) NULL);
-//            errExit("execlp wc");
+            execl(PROCESS_2, (char *) NULL);
+            errExit("execl calendar_filter\n");
 
-        default: /* Parent falls through */
+        default:
             break;
     }
 
-    /* Parent closes unused file descriptors for pipe, and waits for children */
+    if (close(pfd[READ]) == -1)
+        errExit("close read end error\n");
+    if (close(pfd[WRITE]) == -1)
+        errExit("close write end error\n");
+    if (wait(NULL) == -1)
+        errExit("wait child 1\n");
+    if (wait(NULL) == -1)
+        errExit("wait child 2\n");
 
-    close(pfd[0]);
-    close(pfd[1]);
-    wait(NULL);
-    wait(NULL);
-//    if (close(pfd1[0]) == -1)
-//        errExit("close 5");
-//    if (close(pfd2[1]) == -1)
-//        errExit("close 6");
-//    if (wait(NULL) == -1)
-//        errExit("wait 1");
-//    if (wait(NULL) == -1)
-//        errExit("wait 2");
-
-//    exit(EXIT_SUCCESS);
+    exit(EXIT_SUCCESS);
 }

@@ -14,117 +14,18 @@
 #define later 2
 #define same 3
 
-#define delete (-2)
-#define noprint 6
-#define printout 7
 
 #define to_num(str) (str-'0')
 #define value_d(n1,n2) (10*to_num(n1)+to_num(n2))
-#define value_y(n1,n2,n3,n4) (1000*to_num(n1)+100*to_num(n2)+10*to_num(n3)+to_num(n4))
-#define print(eve) printf("%.10s,%.5s,%.10s\n", eve.date, eve.time, eve.location)
+#define print(eve) \
+    printf("%.10s,%.5s,%.10s\n", eve.date, eve.time, eve.location);  \
+    eve.if_print = true
 
-//TODO: X->Delete line
+int event_days = 0;
+int n[100] = {0, 0};  //已存在日期数量，编号为i的日期的event数量
 
-struct events{
-    char date[10];
-    char time[5];
-    char location[10];
-    bool if_print;
-    int number;
-}event[100];
-
-void struct_copy(struct events *dest, int ori_num){
-    memcpy(dest->date, event[ori_num].date,10);
-    memcpy(dest->time, event[ori_num].time,5);
-    memcpy(dest->location,event[ori_num].location,10);
-    dest->if_print = event[ori_num].if_print;
-    dest->number = event[ori_num].number;
-}
-
-int date_compare(char times1[16], char times2[16]){
-    int month = value_d(times1[0],times1[1]) - value_d(times2[0],times2[1]);
-    int day = value_d(times1[3],times1[4]) - value_d(times2[3],times2[4]);
-    long year = value_y(times1[6],times1[7],times1[8],times1[9]) - value_y(times2[6],times2[7],times2[8],times2[9]);
-    int hour = value_d(times1[11],times1[12]) - value_d(times2[11],times2[12]);
-    int minute = value_d(times1[14],times1[15]) - value_d(times2[14],times2[15]);
-
-    if(year < 0) return earlier;
-    else if(year > 0) return later;
-    else{
-        if(month < 0) return earlier;
-        else if(month > 0) return later;
-        else{
-            if(day < 0) return earlier;
-            else if(day > 0) return later;
-            else{
-                if(hour < 0) return earlier;
-                else if(hour > 0) return later;
-                else{
-                    if(minute < 0) return earlier;
-                    else if(minute > 0) return later;
-                    else return same;
-                }
-            }
-        }
-    }
-}
-
-void earliest_check(struct events *earl, int num){
-    char eve_time[16];
-    char earl_time[16];
-
-    for (int j=0;j<num;j++) {
-        if(j==0){
-            struct_copy(earl, j);
-            memcpy(earl_time, earl[j].date, 15);
-        }
-        else{
-            int re;
-            memcpy(eve_time, eve_time, 15);
-            re = date_compare(earl_time,eve_time);
-            if(re == later){
-                struct_copy(earl, j);
-            }
-        }
-    }
-}
-
-int event_lookup(int num, char operation){
-    char date_time[16];
-    memcpy(date_time, event[num].date, 15);
-    int result;
-    int j;
-
-    for(j=0;j<num;j++){
-        char traverse_date_time[16];
-        char tmp[16];
-        memcpy(traverse_date_time, event[j].date, 15);
-        result = date_compare(date_time, traverse_date_time);
-
-        if(result == same){
-            if(operation == 'D'){
-                strcpy(tmp, "99/99/999999:99");
-                memcpy(event[j].date, tmp, 10);
-                memcpy(event[j].time, tmp+10,5);
-                memcpy(event[j].location,event[num].location,10);
-
-                struct events *earl;
-                earl = (struct events*)malloc(sizeof(struct events));
-                earliest_check(earl, num);
-                if(earl->if_print == false) return earl->number;
-                else return delete;
-            }else if(operation == 'X'){
-                memcpy(event[j].location, event[num].location,10);
-                if(event[j].if_print == true) return printout;
-                else return noprint;
-            }
-        }
-    }
-    return 0;
-}
-
-
-bool equal_check(char arr1[10], char arr2[10]){
+//memcmp
+bool equal_check(char arr1[], char arr2[]){
     bool equal = true;
     int count = 0;
     while (count < 10)
@@ -138,83 +39,241 @@ bool equal_check(char arr1[10], char arr2[10]){
     return equal;
 }
 
-int event_compare(int num){
-    char date_time[16];
+struct events{
+    char title[10];
+    char date[10];
+    char time[5];
     char location[10];
-    memcpy(date_time, event[num].date, 15);
-    memcpy(location, event[num].location, 10);
+    bool if_print;
+    int number[2];
+}event[100][100];
+
+char printed_date[100][10];
+
+void event_refresh(int day, int num){
+    for (int j = 0; j < n[day]; j++) {
+        if(j != num)
+            event[day][j].if_print = false;
+    }
+}
+
+void struct_copy(struct events *dest, int ori_day, int ori_num){
+    memcpy(dest->title, event[ori_day][ori_num].title,10);
+    memcpy(dest->date, event[ori_day][ori_num].date,10);
+    memcpy(dest->time, event[ori_day][ori_num].time,5);
+    memcpy(dest->location,event[ori_day][ori_num].location,10);
+    dest->number[0] = event[ori_day][ori_num].number[0];
+    dest->number[1] = event[ori_day][ori_num].number[1];
+}
+
+int date_compare(char times1[5], char times2[5]){
+    int hour = value_d(times1[0],times1[1]) - value_d(times2[0],times2[1]);
+    int minute = value_d(times1[3],times1[4]) - value_d(times2[3],times2[4]);
+
+    if(hour < 0) return earlier;
+    else if(hour > 0) return later;
+    else{
+        if(minute < 0) return earlier;
+        else if(minute > 0) return later;
+        else return same;
+    }
+}
+
+void earliest_check(struct events *earl, int day, int num){
+    char eve_time[5];
+    char earl_time[5];
+
+    for (int j=0;j<n[day];j++) {
+        if(j==0){
+            struct_copy(earl, day, j);
+            earl->if_print = event[day][j].if_print;
+            memcpy(earl_time, earl->time, 5);
+        }
+        else{
+            int re;
+            memcpy(eve_time, event[day][j].time, 5);
+            re = date_compare(earl_time,eve_time);
+            if(re == later){
+                struct_copy(earl, day, j);
+                earl->if_print = event[day][j].if_print;
+                memcpy(earl_time, earl->time, 5);
+            }
+        }
+    }
+}
+
+void delete_event(int d, int num) {
+    char tmp[16], tmpl[11];
+    strcpy(tmp, "99/99/999999:99");
+    strcpy(tmpl, "XXXXXXXXXX");
+    memcpy(event[d][num].title, tmpl, 10);
+    memcpy(event[d][num].date, tmp, 10);
+    memcpy(event[d][num].time, tmp+10, 5);
+    event[d][num].if_print = true;
+}
+
+void event_lookup_X(int day, int num){
+    char title[10];
+    struct events *earl;
+
+    memcpy(title, event[day][num].title, 10);
+    earl = (struct events*)malloc(sizeof(struct events));
+
+    for(int d=0;d<event_days;d++) {
+        for (int j = 0; j < n[d]; j++) {
+            char traverse_title[10];
+            memcpy(traverse_title, event[d][j].title, 10);
+
+            if (equal_check(title, traverse_title) == true) {   //找到原事件，抽象删除
+                if(d != day || j != num) {
+                    delete_event(d, j);
+                    if (d != day) {       //不是当天更改，而是更改到另一天，需要对原来的那天进行check
+                        earliest_check(earl, d, n[d]);
+
+                        char tmp[11];
+                        memcpy(tmp, earl->date, 10);
+                        if (equal_check(tmp, "99/99/9999") == true)
+                            printf("%.10s,--:--,NA\n", printed_date[d]);
+                        else if (earl->if_print == false) {
+                            print(event[earl->number[0]][earl->number[1]]);
+                            event_refresh(earl->number[0], earl->number[1]);
+                        }
+                    }
+                    goto GOTO;
+                }
+            }
+        }
+    }
+
+GOTO:
+    earliest_check(earl, day, num);
+    //判断一下最早的是不是这件事情
+    if(equal_check(earl->title, title)){
+        print(event[day][num]);
+        event_refresh(day, num);
+//        if_print_check(day, num);
+    }
+    //最早的事情没被打出来
+    else if(earl->if_print == false){
+        print(event[earl->number[0]][earl->number[1]]);
+        event_refresh(earl->number[0], earl->number[1]);
+//        if_print_check(day, num);
+    }
+}
+
+void event_lookup_D(int day, int num){
+    char info[25];
+    struct events *earl;
+
+    memcpy(info, event[day][num].title, 25);
+    earl = (struct events*)malloc(sizeof(struct events));
+
+    for(int d=0;d<event_days;d++) {
+        for (int j = 0; j < n[d]; j++) {
+            char traverse_info[25];
+            memcpy(traverse_info, event[d][j].title, 25);
+
+            if (equal_check(info, traverse_info) == true) {   //找到原事件，抽象删除
+                if(j != num) {
+                    delete_event(d, j);
+                    delete_event(day, num);
+
+                    earliest_check(earl, d, n[d]);
+
+                    char tmp[11];
+                    memcpy(tmp, earl->date, 10);
+                    if (equal_check(tmp, "99/99/9999") == true)
+                        printf("%.10s,--:--,NA\n", printed_date[d]);
+                    else if (earl->if_print == false) {
+                        print(event[earl->number[0]][earl->number[1]]);
+                        event_refresh(earl->number[0], earl->number[1]);
+                    }
+                    return;
+                }
+            }
+        }
+    }
+}
+
+int event_compare(int day, int num){
+    char date_time[5];
+    char location[10];
+    memcpy(date_time, event[day][num].time, 5);
+    memcpy(location, event[day][num].location, 10);
     int result = earlier;
     int j;
 
     for(j=0;j<num;j++){
-        char traverse_date_time[16];
+        char traverse_date_time[5];
         char traverse_location[10];
-        memcpy(traverse_date_time, event[j].date, 15);
-        memcpy(traverse_location, event[j].location, 10);
+        memcpy(traverse_date_time, event[day][j].time, 5);
+        memcpy(traverse_location, event[day][j].location, 10);
         result = date_compare(date_time, traverse_date_time);
         if(result == later) return result;
         else if(result == same){
-           if(equal_check(location, traverse_location) == false){
+           if(equal_check(location, traverse_location) == false){    //同一时间不同地点，以后面为准
                result = earlier;
            }
        }
     }
-
     return result;
 }
 
 int main(){
     char input[100];
     char operation;
-    int i = 0;
+//    int n[100] = {0, 0};  //已存在日期数量，编号为i的日期的event数量
+    int k;   //当前event的日期编号
 
     while (fgets(input, sizeof(input), stdin) != NULL) {
         operation = input[0];
-        memcpy(event[i].date, input+13,10);
-        memcpy(event[i].time, input+24,5);
-        memcpy(event[i].location,input+30,10);
-        event[i].if_print = false;
-        event[i].number = i;
+        char tmp[10];
+        bool found = false;
+        memcpy(tmp, input+13,10);
+        for(k=0; k<event_days; k++){
+            if(equal_check(printed_date[k], tmp)){    //该日期已经被记录
+                found = true;
+//                n[k]++;
+                break;
+            }
+        }
+        if(found==false){
+            event_days++;
+            memcpy(printed_date[k], input+13,10);
+        }
+        memcpy(event[k][n[k]].title, input+2,10);
+        memcpy(event[k][n[k]].date, input+13,10);
+        memcpy(event[k][n[k]].time, input+24,5);
+        memcpy(event[k][n[k]].location,input+30,10);
+        event[k][n[k]].number[0] = k;
+        event[k][n[k]].number[1] = n[k];
+        event[k][n[k]].if_print = false;
 
+        n[k] += 1;
         int result;
 
         switch(operation){
             case 'C':
                 //只有当事件较之前的某一事件更早，才会输出
-                result = event_compare(i);
-                if(result == earlier) {
-                    print(event[i]);
-                    event[i].if_print = true;
+                result = event_compare(k, n[k]-1);
+                if(result == earlier){
+                    print(event[k][n[k]-1]);
+                    event_refresh(k, n[k]-1);
                 }
-                else if(result == later) break;
                 break;
             case 'X':
                 //输出当前事件以及更改之前的事件
-                 if(event_lookup(i,'X') == printout){
-                     print(event[i]);
-                     event[i].if_print = true;
-                 }
+                event_lookup_X(k, n[k]-1);
                 break;
             case 'D':
                 //输出特殊标识以及删除之前的事件
-                result = event_lookup(i,'D');
-                if(result == delete) printf("%.10s,--:--,NA\n", event[i].date);
-                else{
-                    print(event[result]);
-                    event[result].if_print = true;
-                }
-                char tmp[16];
-                strcpy(tmp, "99/99/999999:99");
-                memcpy(event[i].date, tmp, 10);
-                memcpy(event[i].time, tmp+10, 5);
-                event[i].if_print = true;
+                event_lookup_D(k, n[k]-1);
                 break;
             default:{
                 printf("OPERATION NOT FOUND");
                 return -1;
             }
         }
-        i += 1;
     }
 }
 
