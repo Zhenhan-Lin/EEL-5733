@@ -1,8 +1,8 @@
 //
-//  main.c
+//  email_filter.c
 //  assignment1
 //
-//  Created by 林真含 on 2023/1/19.
+//  Created by Zhenhan Lin on 2023/1/19.
 //
 
 #include <stdio.h>
@@ -24,14 +24,14 @@ char match_regex(const char *regex_pattern, char *input) {
     int reti;
     int result;
 
-    /* Compile regular expression */
+    // compile regular expression
     reti = regcomp(&regex, regex_pattern, REG_EXTENDED);
     if (reti) {
         fprintf(stderr, "Could not compile regex\n");
         return -1;
     }
 
-    /* Execute regular expression */
+    // execute regular expression
     reti = regexec(&regex, input, 0, NULL, 0);
     if (!reti) {
         result = True;
@@ -43,15 +43,14 @@ char match_regex(const char *regex_pattern, char *input) {
         fprintf(stderr, "Regex match failed: %s\n", msgbuf);
         return -1;
     }
-
-    /* Free compiled regular expression if you want to use the regex_t again */
     regfree(&regex);
     return result;
 }
 
 int main(int argc, const char * argv[]) {
     char str[100];
-    char *regex_pattern = "Subject: [A-Z],([A-Za-z ]{10}),([0-9]{2}/[0-9]{2}/[0-9]{4}),([0-9]{2}:[0-9]{2}),([A-Za-z0-9 ]{10})";    //no validation
+    // input pattern
+    char *regex_pattern = "Subject: [A-Z],([A-Za-z ]{10}),([0-9]{2}/[0-9]{2}/[0-9]{4}),([0-9]{2}:[0-9]{2}),([A-Za-z0-9 ]{10})";    // no validation
     int i = 0;
     int re;
 
@@ -67,8 +66,4 @@ int main(int argc, const char * argv[]) {
         }
         i += 1;
     }
-
-//    for(int j=0;j<i;j++){
-//        printf("%c,%.10s,%.10s,%.5s,%.10s\n", cal[j].operation, cal[j].title, cal[j].date, cal[j].time, cal[j].location);
-//    }
 }

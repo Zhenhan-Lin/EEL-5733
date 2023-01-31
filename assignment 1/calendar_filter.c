@@ -1,8 +1,8 @@
 //
-//  main.c
+//  calendar_filter.c
 //  assignment_1
 //
-//  Created by 林真含 on 2023/1/25.
+//  Created by Zhenhan Lin on 2023/1/25.
 //
 
 #include <stdio.h>
@@ -22,7 +22,7 @@
     eve.if_print = true
 
 int event_days = 0;
-int n[100] = {0, 0};  //已存在日期数量，编号为i的日期的event数量
+int n[100] = {0, 0};  // [0]: exist number of dates, [1]: the number of events of No. i
 
 //memcmp
 bool equal_check(char arr1[], char arr2[]){
@@ -124,10 +124,11 @@ void event_lookup_X(int day, int num){
             char traverse_title[10];
             memcpy(traverse_title, event[d][j].title, 10);
 
-            if (equal_check(title, traverse_title) == true) {   //找到原事件，抽象删除
+            if (equal_check(title, traverse_title) == true) {   // find the original event, abstract delete
                 if(d != day || j != num) {
                     delete_event(d, j);
-                    if (d != day) {       //不是当天更改，而是更改到另一天，需要对原来的那天进行check
+                    // when change date to another day, need to check if the earliest event of the original day changed
+                    if (d != day) {
                         earliest_check(earl, d, n[d]);
 
                         char tmp[11];
@@ -147,13 +148,13 @@ void event_lookup_X(int day, int num){
 
 GOTO:
     earliest_check(earl, day, num);
-    //判断一下最早的是不是这件事情
+    //if the current event is the earliest one in the day
     if(equal_check(earl->title, title)){
         print(event[day][num]);
         event_refresh(day, num);
 //        if_print_check(day, num);
     }
-    //最早的事情没被打出来
+    //if the earliest event changed
     else if(earl->if_print == false){
         print(event[earl->number[0]][earl->number[1]]);
         event_refresh(earl->number[0], earl->number[1]);
@@ -173,7 +174,7 @@ void event_lookup_D(int day, int num){
             char traverse_info[25];
             memcpy(traverse_info, event[d][j].title, 25);
 
-            if (equal_check(info, traverse_info) == true) {   //找到原事件，抽象删除
+            if (equal_check(info, traverse_info) == true) {   // find the original event, abstract delete
                 if(j != num) {
                     delete_event(d, j);
                     delete_event(day, num);
@@ -211,7 +212,8 @@ int event_compare(int day, int num){
         result = date_compare(date_time, traverse_date_time);
         if(result == later) return result;
         else if(result == same){
-           if(equal_check(location, traverse_location) == false){    //同一时间不同地点，以后面为准
+           if(equal_check(location, traverse_location) == false){
+               // same time but different location, print out the latter one
                result = earlier;
            }
        }
@@ -222,8 +224,7 @@ int event_compare(int day, int num){
 int main(){
     char input[100];
     char operation;
-//    int n[100] = {0, 0};  //已存在日期数量，编号为i的日期的event数量
-    int k;   //当前event的日期编号
+    int k;   //number of current event date
 
     while (fgets(input, sizeof(input), stdin) != NULL) {
         operation = input[0];
@@ -231,7 +232,7 @@ int main(){
         bool found = false;
         memcpy(tmp, input+13,10);
         for(k=0; k<event_days; k++){
-            if(equal_check(printed_date[k], tmp)){    //该日期已经被记录
+            if(equal_check(printed_date[k], tmp)){    // the date has been recorded
                 found = true;
 //                n[k]++;
                 break;
@@ -254,7 +255,7 @@ int main(){
 
         switch(operation){
             case 'C':
-                //只有当事件较之前的某一事件更早，才会输出
+                // print out only when creating the earlier event that day
                 result = event_compare(k, n[k]-1);
                 if(result == earlier){
                     print(event[k][n[k]-1]);
@@ -262,11 +263,13 @@ int main(){
                 }
                 break;
             case 'X':
-                //输出当前事件以及更改之前的事件
+                // record the changed event
+                // print out when the earliest event of the day changed
                 event_lookup_X(k, n[k]-1);
                 break;
             case 'D':
-                //输出特殊标识以及删除之前的事件
+                // delete the event
+                // print out when the earliest event of the day changed
                 event_lookup_D(k, n[k]-1);
                 break;
             default:{

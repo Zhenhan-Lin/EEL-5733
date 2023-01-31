@@ -1,5 +1,5 @@
 //
-// Created by 林真含 on 2023/1/28.
+// Created by Zhenhan Lin on 2023/1/28.
 //
 
 
@@ -32,13 +32,10 @@ int main(int argc, char *argv[])
         case -1:
             errExit("child 1 create error\n");
 
-        case 0:             /* First child: exec 'ls' to write to pipe */
-            if (close(pfd[READ]) == -1)                    /* READ end is unused */
+        case 0:
+            if (close(pfd[READ]) == -1)
                 errExit("child 1: close read end error\n");
-
-            /* Duplicate stdout on write end of pipe; close duplicated descriptor */
-
-            if (pfd[WRITE] != STDOUT_FILENO) {              /* Defensive check */
+            if (pfd[WRITE] != STDOUT_FILENO) {
                 dup2(pfd[WRITE], STDOUT_FILENO);
                 if (dup2(pfd[WRITE], STDOUT_FILENO) == -1)
                     errExit("child 1: dup2 write error\n");
@@ -46,10 +43,10 @@ int main(int argc, char *argv[])
                     errExit("child 1: close write end error\n");
             }
 
-            execl(PROCESS_1, (char *) NULL);          /* Writes to pipe */
+            execl(PROCESS_1, (char *) NULL);
             errExit("execl email_filter\n");
 
-        default:            /* Parent falls through to create next child */
+        default:
             break;
     }
 
@@ -57,13 +54,11 @@ int main(int argc, char *argv[])
         case -1:
             errExit("child 2 create error\n");
 
-        case 0:             /* Second child: exec 'wc' to read from pipe */
-            if (close(pfd[WRITE]) == -1)                    /* WRITE end is unused */
+        case 0:
+            if (close(pfd[WRITE]) == -1)
                 errExit("child 2: close write end error\n");
 
-            /* Duplicate stdin on read end of pipe; close duplicated descriptor */
-
-            if (pfd[READ] != STDIN_FILENO) {               /* Defensive check */
+            if (pfd[READ] != STDIN_FILENO) {
                 dup2(pfd[READ], STDIN_FILENO);
                 if (dup2(pfd[READ], STDIN_FILENO) == -1)
                     errExit("child 2: dup2 read error\n");
