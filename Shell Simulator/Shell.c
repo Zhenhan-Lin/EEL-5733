@@ -51,6 +51,7 @@ int main(int argc, char *argv[]) {
     char *args2[ARG_MAX] = {NULL};
     str = (char *)malloc(BUFFER_SIZE * sizeof(char));
 
+
     while (fgets(str, BUFFER_SIZE, stdin) != NULL) {
         for (char *c = str; *c; c++) if (*c=='\n') *c = ' ';
         bool flag = false;
@@ -81,6 +82,7 @@ int main(int argc, char *argv[]) {
                 errExit("child 1 create error\n");
             case 0:
                 execvp(args1[0], args1);
+
                 errExit("execvp email_filter\n");
             default:
                 break;
