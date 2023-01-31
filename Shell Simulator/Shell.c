@@ -153,41 +153,36 @@ int main(int argc, char *argv[]) {
             errExit("wait child 2\n");
         }
         else if(op == SEQUENTIAL || op == CD_AND || op == CD_OR){
+//            for(int i=0;args1[i]!=NULL;i++)  puts(args1[i]);
+//            for(int i=0;args2[i]!=NULL;i++)  puts(args2[i]);
             pid_t child_p[2];
+            int status;
 
             switch (child_p[0] = fork()) {
                 case -1: errExit("child 1 create error\n");
                 case 0:
-                    if (op == SEQUENTIAL) {
-
-                    } else if (op == CD_AND){
-
-                    } else if (op == CD_OR){
-
-                    }
                     execvp(args1[0], args1);
-                    errExit("execvp child\n");
+                    errExit("execl calendar_filter\n");
                 default:
                     break;
             }
 
+            waitpid(child_p[0], &status, 0);
             switch (child_p[1] = fork()) {
                 case -1: errExit("child 2 create error\n");
                 case 0:
-                    if (op == SEQUENTIAL) {
-
-                    } else if (op == CD_AND){
-
+                    if (op == CD_AND){
+//                        printf("%d\n", status);
+                        if(status != 0) break;
                     } else if (op == CD_OR){
-
+//                        printf("%d\n", status);
+                        if(status == 0) break;
                     }
-                    execvp(args1[0], args1);
+                    execvp(args2[0], args2);
                     errExit("execvp child\n");
                 default:
                     break;
             }
-            int status;
-            waitpid(child_p[0], &status, 0);
             waitpid(child_p[1], &status, 0);
         }else{
             pid_t child_p;        // PID create for child process
@@ -201,7 +196,6 @@ int main(int argc, char *argv[]) {
             int status;
             waitpid(child_p, &status, 0);
         }
-
         printf("USR $ ");
     }
 }
