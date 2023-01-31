@@ -12,16 +12,12 @@
 
 #define BUFFER_SIZE 1000
 #define ARG_MAX 128
+#define READ 0
+#define WRITE 1
 #define errExit(__VA_ARGS__){ \
         fprintf(stderr, __VA_ARGS__); \
         exit(1);              \
         }
-//#define STD_OUT    ">"   // redirect std input to the file
-//#define STD_IN     "<"   // redirect std input to the prog
-//#define PIPE       "|"   // execute prog1 and prog2 in parallel and redirect std output of prog1 to prog2
-//#define SEQUENTIAL ";"   // first execute prog1 in a process and once it terminates execute prog2 in a process
-//#define CD_AND     "&&"  // first execute prog1 in a process and if the return status is 0 then execute prog2 in a process
-//#define CD_OR      "||"  // first execute prog1 in a process and if the return status is not zero then execute prog2
 
 enum operation{
     STD_OUT, STD_IN, PIPE, SEQUENTIAL, CD_AND, CD_OR, NONE
@@ -51,7 +47,7 @@ int main(int argc, char *argv[]) {
     char *args2[ARG_MAX] = {NULL};
     str = (char *)malloc(BUFFER_SIZE * sizeof(char));
 
-
+    printf("USR $ ");
     while (fgets(str, BUFFER_SIZE, stdin) != NULL) {
         for (char *c = str; *c; c++) if (*c=='\n') *c = ' ';
         bool flag = false;
@@ -76,20 +72,134 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        pid_t child_p;        // PID create for child process
-        switch (child_p = fork()) {
-            case -1:
-                errExit("child 1 create error\n");
-            case 0:
-                execvp(args1[0], args1);
+        if(op == STD_IN || op == STD_OUT){
+            pid_t child_p;        // PID create for child process
+            switch (child_p = fork()) {
+                case -1: errExit("child 1 create error\n");
+                case 0:
+                    if (op == STD_IN) {
+                        dup2(open(args2[0], O_RDONLY), STDIN_FILENO);
+                    } else if (op == STD_OUT) {
+                        dup2(open(args2[0], O_CREAT|O_RDWR), STDOUT_FILENO);
+                    }
+                    execvp(args1[0], args1);
+                    errExit("execvp child\n");
+                default:
+                    break;
+            }
+            int status;
+            waitpid(child_p, &status, 0);
+        }else if(op == PIPE){
+            int pfd[2];              // Pipe file descriptors
+            pipe(pfd);               // email_filter - fifo - calendar_filter
+            pid_t child_p[2];        // PID create for child process
+            if (pipe(pfd) == -1)
+            errExit("pipe create error\n");
 
-                errExit("execvp email_filter\n");
-            default:
-                break;
+            switch (child_p[0] = fork()) {
+                case -1:
+                errExit("child 1 create error\n");
+
+                case 0:
+                    if (close(pfd[READ]) == -1)
+                    errExit("child 1: close read end error\n");
+                    if (pfd[WRITE] != STDOUT_FILENO) {
+                        dup2(pfd[WRITE], STDOUT_FILENO);
+                        if (dup2(pfd[WRITE], STDOUT_FILENO) == -1)
+                        errExit("child 1: dup2 write error\n");
+                        if (close(pfd[WRITE]) == -1)
+                        errExit("child 1: close write end error\n");
+                    }
+
+                    execvp(args1[0], args1);
+                    errExit("execl email_filter\n");
+
+                default:
+                    break;
+            }
+
+            switch (child_p[1] = fork()) {
+                case -1:
+                errExit("child 2 create error\n");
+
+                case 0:
+                    if (close(pfd[WRITE]) == -1)
+                    errExit("child 2: close write end error\n");
+
+                    if (pfd[READ] != STDIN_FILENO) {
+                        dup2(pfd[READ], STDIN_FILENO);
+                        if (dup2(pfd[READ], STDIN_FILENO) == -1)
+                        errExit("child 2: dup2 read error\n");
+                        if (close(pfd[READ]) == -1)
+                        errExit("child 2: close read end error\n");
+                    }
+
+                    execvp(args2[0], args2);
+                    errExit("execl calendar_filter\n");
+
+                default:
+                    break;
+            }
+
+            if (close(pfd[READ]) == -1)
+            errExit("close read end error\n");
+            if (close(pfd[WRITE]) == -1)
+            errExit("close write end error\n");
+            if (wait(NULL) == -1)
+            errExit("wait child 1\n");
+            if (wait(NULL) == -1)
+            errExit("wait child 2\n");
+        }
+        else if(op == SEQUENTIAL || op == CD_AND || op == CD_OR){
+            pid_t child_p[2];
+
+            switch (child_p[0] = fork()) {
+                case -1: errExit("child 1 create error\n");
+                case 0:
+                    if (op == SEQUENTIAL) {
+
+                    } else if (op == CD_AND){
+
+                    } else if (op == CD_OR){
+
+                    }
+                    execvp(args1[0], args1);
+                    errExit("execvp child\n");
+                default:
+                    break;
+            }
+
+            switch (child_p[1] = fork()) {
+                case -1: errExit("child 2 create error\n");
+                case 0:
+                    if (op == SEQUENTIAL) {
+
+                    } else if (op == CD_AND){
+
+                    } else if (op == CD_OR){
+
+                    }
+                    execvp(args1[0], args1);
+                    errExit("execvp child\n");
+                default:
+                    break;
+            }
+            int status;
+            waitpid(child_p[0], &status, 0);
+            waitpid(child_p[1], &status, 0);
+        }else{
+            pid_t child_p;        // PID create for child process
+            switch (child_p = fork()) {
+                case -1: errExit("child 1 create error\n");
+                case 0:
+                    execvp(args1[0], args1);
+                default:
+                    break;
+            }
+            int status;
+            waitpid(child_p, &status, 0);
         }
 
-//        int status = 0;
-//        waitpid(child_p, &status, 0);
-//        errExit("wait child 1\n");
+        printf("USR $ ");
     }
 }
