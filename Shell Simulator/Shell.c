@@ -90,6 +90,8 @@ int main(int argc, char *argv[]) {
             int status;
             waitpid(child_p, &status, 0);
         }else if(op == PIPE){
+//            for(int i=0;args1[i]!=NULL;i++)  puts(args1[i]);
+//            for(int i=0;args2[i]!=NULL;i++)  puts(args2[i]);
             int pfd[2];              // Pipe file descriptors
             pipe(pfd);               // email_filter - fifo - calendar_filter
             pid_t child_p[2];        // PID create for child process
