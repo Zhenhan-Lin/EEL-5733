@@ -43,7 +43,7 @@ void operation(char *ptr){
 
 int main(int argc, char *argv[]) {
     char *str;
-    char *args1[ARG_MAX] = {NULL};  //有限长度的指针
+    char *args1[ARG_MAX] = {NULL};
     char *args2[ARG_MAX] = {NULL};
     str = (char *)malloc(BUFFER_SIZE * sizeof(char));
 
