@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 
-typedef char * ElementType;
+typedef const char * ElementType;
 
 struct Queue{
     ElementType *data;
