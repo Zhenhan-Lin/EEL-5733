@@ -20,11 +20,12 @@ $(BUILD)/lib/%.o: lib/%.c $(LIB_INCS)
 	$(CC) $(CFLAGS) -c -I./lib -o $@ $<
 
 $(BUILD)/%: $(BUILD)/%.o $(patsubst %.c,$(BUILD)/%.o,$(LIB_SRCS))
-	${CC} -o $@ $?;
+	${CC} -o $@ $^;
 	@chmod +x $@
 
+BUFFER?=10
 run: all
-	$(BUILD)/location_updater 10 < 'input.txt'
+	$(BUILD)/location_updater $(BUFFER) < 'input.txt'
 
 clean:
 	rm -rf $(BUILD)
