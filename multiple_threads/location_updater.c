@@ -18,14 +18,17 @@ int main(int argc, char *argv[]){
 	pthread_t tid[2];
 	// Initialize queue
 	InitQueue(MAXSIZE);
+
 	// Create the threads; may be any number, in general
 	if (pthread_create(&tid[0], NULL, email_filter, NULL))
 		errExit("Unable to create producer\n");
 	if (pthread_create(&tid[1], NULL, calendar_filter, NULL))
 		errExit("Unable to create consumer\n");
 	// Wait for created thread to exit
-	pthread_join(tid[0], NULL);
-	pthread_join(tid[1], NULL);
+	if(pthread_join(tid[0], NULL) != 0)
+        errExit("thread_producer_join fail\n");
+	if(pthread_join(tid[1], NULL) != 0)
+        errExit("thread_consumer_join fail\n");
 
     return 0;
 }
