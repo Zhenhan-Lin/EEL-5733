@@ -1,0 +1,38 @@
+# Env related settings
+BUILD	?= build
+# Compiler Parameters
+CC		?= gcc
+CFLAGS	?= -Wall
+# Object list
+SRCS     = $(wildcard *.c)
+INCS     = $(wildcard inc/*.h)
+LIB_INCS = $(wildcard lib/*.h)
+LIB_SRCS = $(wildcard lib/*.c)
+# Default target
+all: $(patsubst %.c,$(BUILD)/%,$(SRCS))
+# Set up C suffixes & relationship between .cpp and .o files
+$(BUILD)/%.o: %.c $(INCS) $(LIB_INCS)
+	@mkdir -p $(shell dirname $@)
+	$(CC) $(CFLAGS) -c -I./inc -I./lib -o $@ $<
+
+$(BUILD)/lib/%.o: lib/%.c $(LIB_INCS)
+	@mkdir -p $(shell dirname $@)
+	$(CC) $(CFLAGS) -c -I./lib -o $@ $<
+
+$(BUILD)/%: $(BUILD)/%.o $(patsubst %.c,$(BUILD)/%.o,$(LIB_SRCS))
+	${CC} -o $@ $^;
+	@chmod +x $@
+
+BUFFER?=10
+run: all
+	@	$(BUILD)/tranfProg 'sample/input.txt' $(BUFFER) \
+	|	diff -u 'sample/output.txt' - \
+	&&	(tput setaf 10; tput bold; echo "[PASS] 'input.txt'"; tput sgr0) \
+	||	(tput setaf  9; tput bold; echo "[FAIL] 'input.txt'"; tput sgr0) \
+
+clean:
+	rm -rf $(BUILD)
+
+.PHONY: all clean
+
+.PRECIOUS: $(BUILD)/lib/%.o $(BUILD)/%.o
