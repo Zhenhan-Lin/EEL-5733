@@ -20,7 +20,7 @@ int main(int argc, char *argv[]){
 
     char *pattern_1 = "^([0-9]+) ([0-9]+)";
 
-    if(argc >= 2){
+    if(argc > 2){
         freopen(argv[1], "r", stdin);
         num_thread = atoi(argv[2]);
     }else{
@@ -37,14 +37,10 @@ int main(int argc, char *argv[]){
             a->number = atol(strtok(input, " "));
             a->balance = atol(strtok(NULL, " "));
             a->lock = malloc(sizeof(*(a->lock)));
+            a->cond = malloc(sizeof(*(a->cond)));
             pthread_mutex_init(a->lock, NULL);
+            pthread_cond_init(a->cond, NULL);
         }else if(match_regex(pattern_2, input) == true){
-//            char *ptr = strtok(input, " ");
-//            size_t sender, reciever;
-//            long amount;
-//            sender = atol(strtok(NULL, " "));
-//            reciever = atol(strtok(NULL, " "));
-//            amount = atol(strtok(NULL, " "));
             for(size_t i = 0; i < num_thread; i++)
                 pthread_create(&tid[i], NULL, thread_main, (i == 0) ? input : NULL);
             break;
