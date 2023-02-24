@@ -29,6 +29,10 @@
   ├── sample
   │   ├── EFT.1.in
   │   ├── EFT.1.out
+  │   ├── EFT.2.in
+  │   ├── EFT.2.out
+  │   ├── EFT.3.in
+  │   ├── EFT.3.out
   │   ├── input.txt
   │   └── output.txt
   └── tranfProg.c
