@@ -8,7 +8,7 @@
   > default buffer size: `10`  
   > default sample input: `sample/input.txt`
 + To run other input files, please use format like: 
-  > basic command: `/tranfProg [input_file_name] [buffer_size]`   
+  > basic command: `./tranfProg [input_file_name] [buffer_size]`   
   > compare with result:  add `| diff -u [result_file_name] - `  
   > reminder： add `&& echo "[PASS]" || echo "[FAIL]"`
 + To build the project, run `make clean`
