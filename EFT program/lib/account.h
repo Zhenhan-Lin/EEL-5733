@@ -10,6 +10,7 @@ typedef struct Account {
     size_t number;
     long balance;
     pthread_mutex_t *lock;
+    pthread_cond_t *cond;
 }* Account;
 
 extern Account acc_list;
