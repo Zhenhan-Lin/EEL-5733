@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h>
-#include "lib/util.h"
 #include "lib/account.h"
 #include "inc/transfer.c"
 

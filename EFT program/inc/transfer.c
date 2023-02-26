@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdbool.h>
-#include "../lib/account.h"
+#include "../lib/util.h"
 // 0, 1, 2, 3...
 
 char *pattern_2 = "^Transfer ([0-9]+) ([0-9]+) ([0-9]+)";
