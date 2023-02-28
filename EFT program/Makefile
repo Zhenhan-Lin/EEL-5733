@@ -20,7 +20,7 @@ $(BUILD)/lib/%.o: lib/%.c $(LIB_INCS)
 	$(CC) $(CFLAGS) -c -I./lib -o $@ $<
 
 $(BUILD)/%: $(BUILD)/%.o $(patsubst %.c,$(BUILD)/%.o,$(LIB_SRCS))
-	${CC} -o $@ $^;
+	${CC} -pthread -o $@ $^;
 	@chmod +x $@
 
 BUFFER?=10
