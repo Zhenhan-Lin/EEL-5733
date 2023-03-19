@@ -21,8 +21,9 @@ void process_init(){
     void *p = mmap(NULL, s, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
     lock = p;
-    producer = p + 1;
+    producer = (pthread_cond_t *)(lock + 1);
     consumer = producer + 1;
+
     pthread_mutexattr_init(&attr_lock);
     pthread_mutexattr_setpshared(&attr_lock, PTHREAD_PROCESS_SHARED);
     pthread_condattr_init(&attr);
@@ -30,7 +31,6 @@ void process_init(){
     pthread_mutex_init(lock, &attr_lock);
     pthread_cond_init(producer, &attr);
     pthread_cond_init(consumer, &attr);
-    printf("%p %p %p", lock, producer, consumer);
 }
 
 // The function thread_puts() writes the string s, and a terminating newline character, to the stream stdout.
@@ -38,10 +38,10 @@ void process_puts(const char *str){
     // producer
 //    int s = pthread_mutex_lock(&model.lock);
     static ElementType _str;
-    strcpy(_str.str, str);
+    strcpy(_str.str, str == NULL ? "" : str);
     int s = pthread_mutex_lock(lock);
     if(s!=0)
-        errExit("producer pthread mutex lock error\n");
+        errExit("producer pthread mutex lock error: %d\n", s);
     // check if queue is full
     while(QIsFull())
         pthread_cond_wait(producer, lock);
@@ -56,14 +56,14 @@ const char * process_getline(){
     // consumer
     int s = pthread_mutex_lock(lock);
     if(s!=0)
-        errExit("consumer pthread mutex lock error\n");
+        errExit("consumer pthread mutex lock error: %d\n", s);
     // check if queue is empty
     while(QIsEmpty())
         pthread_cond_wait(consumer, lock);
     ElementType * str = malloc(sizeof(ElementType));
-    * str = DeQueue();
+    *str = DeQueue();
     // Release the lock and send signal to consumer
     pthread_mutex_unlock(lock);
     pthread_cond_signal(producer);
-    return str->str;
+    return strlen(str->str) == 0 ? NULL : str->str;
 }

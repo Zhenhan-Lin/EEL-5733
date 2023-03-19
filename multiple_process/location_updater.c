@@ -17,7 +17,6 @@ int main(int argc, char *argv[]){
     size_t MAXSIZE = atoi(argv[1]);
     process_init();
 	// Initialize queue
-    printf("Parents");
 	InitQueue(MAXSIZE);
     pid_t child_p[2];        // PID create for child process
 
@@ -26,6 +25,7 @@ int main(int argc, char *argv[]){
             errExit("child 1 create error\n");
         case 0:
             email_filter(NULL);
+            exit(0);
         default:
             break;
     }
@@ -35,14 +35,15 @@ int main(int argc, char *argv[]){
             errExit("child 2 create error\n");
         case 0:
             calendar_filter(NULL);
+            exit(0);
         default:
             break;
     }
 
 	// Wait for created thread to exit
-    if (wait(NULL) == -1)
+    if (waitpid(child_p[0], NULL, 0) == -1)
         errExit("wait child 1\n");
-    if (wait(NULL) == -1)
+    if (waitpid(child_p[1], NULL, 0) == -1)
         errExit("wait child 2\n");
 
     return 0;
