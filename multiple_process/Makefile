@@ -2,14 +2,20 @@
 BUILD	?= build
 # Compiler Parameters
 CC		?= gcc
-CFLAGS	?= -Wall
+CFLAGS	?= -Wall -pthread
 # Object list
 SRCS     = $(wildcard *.c)
 INCS     = $(wildcard inc/*.h)
 LIB_INCS = $(wildcard lib/*.h)
 LIB_SRCS = $(wildcard lib/*.c)
 # Default target
+
 all: $(patsubst %.c,$(BUILD)/%,$(SRCS))
+
+#all:
+#	@mkdir -p build
+#	$(CC) -o build/location_updater -I./lib $(SRCS) $(LIB_SRCS)
+
 # Set up C suffixes & relationship between .cpp and .o files
 $(BUILD)/%.o: %.c $(INCS) $(LIB_INCS)
 	@mkdir -p $(shell dirname $@)
@@ -20,7 +26,7 @@ $(BUILD)/lib/%.o: lib $(LIB_INCS)
 	$(CC) $(CFLAGS) -c -I./lib -o $@ $<
 
 $(BUILD)/%: $(BUILD)/%.o $(patsubst %.c,$(BUILD)/%.o,$(LIB_SRCS))
-	${CC} -o $@ $^;
+	${CC} -pthread -o $@ $^;
 	@chmod +x $@
 
 BUFFER?=10
