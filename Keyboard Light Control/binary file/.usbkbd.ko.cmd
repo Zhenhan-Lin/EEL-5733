@@ -1,0 +1,1 @@
+cmd_/home/emily/Desktop/Assignment_7/usbkbd.ko := ld -r  -m elf_x86_64 -z noexecstack   --build-id=sha1  -T scripts/module.lds -o /home/emily/Desktop/Assignment_7/usbkbd.ko /home/emily/Desktop/Assignment_7/usbkbd.o /home/emily/Desktop/Assignment_7/usbkbd.mod.o;  true
